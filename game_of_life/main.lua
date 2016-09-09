@@ -110,22 +110,22 @@ function love.update()
 	i=math.floor(player.i)
 	j=math.floor(player.j)
 
-	if love.keyboard.isDown("up") and player.i>1 then
+	if love.keyboard.isDown("w") and player.i>1 then
 		if(board[math.ceil(player.i-1)][j]==0) then
 			player.i=player.i-player.speed
 		end
 	end
-	if love.keyboard.isDown("down") and player.i<table.getn(board) then
+	if love.keyboard.isDown("s") and player.i<table.getn(board) then
 		if(board[math.floor(player.i+1)][j]==0) then
 			player.i=player.i+player.speed
 		end
 	end
-	if love.keyboard.isDown("left") and player.j>1 then
+	if love.keyboard.isDown("a") and player.j>1 then
 		if(board[i][math.ceil(player.j-1)]==0) then
 			player.j=player.j-player.speed
 		end
 	end
-	if love.keyboard.isDown("right") then
+	if love.keyboard.isDown("d") then
 		if(board[i][math.floor(player.j+1)]==0) then
 			player.j=player.j+player.speed
 		end
@@ -152,7 +152,7 @@ board_cell = 20
 function love.draw()
 	love.graphics.setPointSize(math.ceil(camera.zoom))
 	for i=1,table.getn(board) do
-		for j=1,table.getn(board) do
+		for j=1,table.getn(board[1]) do
 			if(board[i][j]~=0) then
 				love.graphics.setColor(0,0,255,255)
 				love.graphics.points(camera.zoom*j-camera.x,camera.zoom*i-camera.y)
