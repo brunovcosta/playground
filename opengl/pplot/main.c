@@ -3,29 +3,15 @@
 #include<GL/glut.h>
 #include<stdio.h>
 #include<stdlib.h>
-char* console(char* cmd){
-	FILE* stream;
-	stream = popen(cmd,"r");
-	if(stream==NULL){
-		printf("Erro\n");
-		exit(1);
-	}
-	fseek(stream,0L,SEEK_END);
-	int filesize = ftell(stream);
-	char* output=(char*)malloc(filesize+1);
-	size_t size=fread(output,1,size,stream);
-	output[size]=0;
-	return output;
-}
+float x=0,y=0;
 void desenha(){
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	//glLoadIdentity();
-	//gluOrtho2D(-2,2,-2,2);
+	gluOrtho2D(-1,1,-1,1);
 
-	glBegin(GL_TRIANGLES);
+	glBegin(GL_LINES);
 	glColor3f(1,0,0);
-	glVertex2f(-.5f,-.7f);
+	glVertex2f(x,y);
 	glColor3f(0,1,0);
 	glVertex2f(-.9f,-.13f);
 	glColor3f(0,0,1);
@@ -34,20 +20,19 @@ void desenha(){
 
 	glFlush();
 }
-void mouse(int button,int state,int x,int y){
-	printf("button:%d\n",button);
-	printf("state:%d\n",state);
-	printf("(x,y):(%d,%d)\n",x,y);
+void motion(int mouse_x,int mouse_y){
+	x=+2.0*(mouse_x-glutGet(GLUT_WINDOW_WIDTH)/2.0)/glutGet(GLUT_WINDOW_WIDTH);
+	y=-2.0*(mouse_y-glutGet(GLUT_WINDOW_HEIGHT)/2.0)/glutGet(GLUT_WINDOW_HEIGHT);
+	desenha();
 }
 int main(int argc,char **argv){
-	printf("%s\n",console("/bin/ls /"));
 	glutInit(&argc,argv);
 	glutInitDisplayMode(GLUT_SINGLE|GLUT_RGB);
 	glutInitWindowSize(800,600);
 	glutInitWindowPosition(400,400);
 	glutCreateWindow("Nome de testes");
 	glutDisplayFunc(desenha);
-	glutMouseFunc(mouse);
+	glutPassiveMotionFunc(motion);
 	glutMainLoop();
 
 	return 0;
