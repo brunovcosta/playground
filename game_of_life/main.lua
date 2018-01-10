@@ -11,7 +11,7 @@ end
 camera = {
 	x = 0,
 	y = 0,
-	zoom = 10
+	zoom = 40
 }
 
 play = true
@@ -36,7 +36,7 @@ function updateCell(from,to,i,j)
 			boardSet(to,i,j,prev)
 		end
 	else
-		if(neighborsCount(from,i,j)==3) then -- Qualquer célula morta com exatamente três vizinhos vivos se torna uma célula viva
+		if(neighborsCount(from,i,j) == 3) then -- Qualquer célula morta com exatamente três vizinhos vivos se torna uma célula viva
 			boardSet(to,i,j,1)
 		else
 			boardSet(to,i,j,0)
@@ -64,13 +64,34 @@ function boardSet(board,i,j,value)
 	board[i][j] = value
 end
 
-windowSize = 50;
+function love.load()
+	love.graphics.setBackgroundColor(10,10,10)
+    love.window.setFullscreen(true, "desktop")
+	
+	sounds = {
+		remove = love.audio.newSource("sounds/remove.wav"),
+		create = love.audio.newSource("sounds/create.wav")
+	}
+end
+
+windowSize = 100;
+mouseLastState = {
+	primary = false
+}
 function love.update(dt)
+	i1 = player.i-windowSize/2
+	i2 = player.i+windowSize/2
+	j1 = player.j-windowSize/2
+	j2 = player.j+windowSize/2
+	--i1 = math.floor(.5+(player.i-windowSize/2)/windowSize)*windowSize
+	--i2 = math.floor(.5+(player.i+windowSize/2)/windowSize)*windowSize
+	--j1 = math.floor(.5+(player.j-windowSize/2)/windowSize)*windowSize
+	--j2 = math.floor(.5+(player.j+windowSize/2)/windowSize)*windowSize
 	-- Generation rule
 	if(play) then
-		nextBoard = board
-		for i=player.i-windowSize/2,player.i+windowSize/2 do
-			for j=player.j-windowSize/2,player.j+windowSize/2 do
+		nextBoard = {}
+		for i=i1,i2 do
+			for j=j1,j2 do
 				updateCell(board,nextBoard,i,j)
 			end
 		end
@@ -80,17 +101,30 @@ function love.update(dt)
 	-- Mouse input
 	mouseI = math.floor((love.mouse.getY()+camera.y)/camera.zoom)
 	mouseJ = math.floor((love.mouse.getX()+camera.x)/camera.zoom)
-	if(love.mouse.isDown(1)) then
-		boardSet(board,mouseI,mouseJ,1)
+	if love.mouse.isDown(1) and not mouseLastState.primary then
+		state = boardGet(board,mouseI,mouseJ)
+		boardSet(board,mouseI,mouseJ,1-state)
+		if state==1 then
+			sounds.remove:play()
+		else
+			sounds.create:play()
+		end
 		play=false
 	end
-	if(love.mouse.isDown(2)) then
-		boardSet(board,mouseI,mouseJ,0)
-		play=false
-	end
+	mouseLastState.primary = love.mouse.isDown(1)
+
+	-- Help keys
 	if love.keyboard.isDown("return") then
 		play=true
 	end
+	if love.keyboard.isDown("delete") then
+		board = {}
+	end
+	if love.keyboard.isDown("escape") then
+		love.event.quit()
+	end
+
+	print(neighborsCount(board,mouseI,mouseJ))
 	
 	-- Player motion
 	i=math.floor(player.i)
@@ -109,12 +143,6 @@ function love.update(dt)
 		player.j=player.j+player.speed
 	end
 
-	-- Colision detection
-	if boardGet(board,math.floor(player.i),math.floor(player.j)) == 1 then
-		player.i=10
-		player.j=10
-	end
-
 	-- Camera motion
 	camera.x = camera.zoom*player.j-love.graphics.getWidth()/2
 	camera.y = camera.zoom*player.i-love.graphics.getHeight()/2
@@ -127,6 +155,7 @@ function love.update(dt)
 	if love.keyboard.isDown("2") then
 		camera.zoom = camera.zoom/zoomRate
 	end
+
 end
 board_cell = 20
 function love.draw()
@@ -134,34 +163,34 @@ function love.draw()
 	love.graphics.scale( camera.zoom, camera.zoom )
 	love.graphics.setPointSize(math.ceil(camera.zoom))
 
+	i1 = player.i-windowSize/2
+	i2 = player.i+windowSize/2
+	j1 = player.j-windowSize/2
+	j2 = player.j+windowSize/2
+	--i1 = math.floor(.5+(player.i-windowSize/2)/windowSize)*windowSize
+	--i2 = math.floor(.5+(player.i+windowSize/2)/windowSize)*windowSize
+	--j1 = math.floor(.5+(player.j-windowSize/2)/windowSize)*windowSize
+	--j2 = math.floor(.5+(player.j+windowSize/2)/windowSize)*windowSize
 	-- Floor
-	for i=math.floor(player.i)-windowSize/2,math.floor(player.i)+windowSize/2 do
-		for j=math.floor(player.j)-windowSize/2,math.floor(player.j)+windowSize/2 do
-			if (math.floor(i/board_cell)+math.floor(j/board_cell))%2==0 then
-				love.graphics.setColor(100,100,255,255)
-			else
-				love.graphics.setColor(120,120,255,255)
-			end
-			love.graphics.points(j,i)
-		end
-	end
+	love.graphics.setColor(0, 0, 0, 255 )
+	love.graphics.rectangle("fill", j1, i1, j2-j1, i2-i1 )
 
 	-- Cells
+	love.graphics.setColor(255,255,255,255)
 	for i,list in pairs(board) do
 		for j,value in pairs(list) do
 			if(value~=0) then
-				love.graphics.setColor(0,0,255,255)
 				love.graphics.points(j,i)
 			end
 		end
 	end
 
-	-- Player
-	love.graphics.setColor(255, 0, 0, 255 )
-	love.graphics.points(player.j,player.i)
-
 	-- Mouse
-	love.graphics.setColor(128, 255, 0, 64 )
+	if play then
+		love.graphics.setColor(128, 255, 0, 64 )
+	else
+		love.graphics.setColor(255, 128, 0, 64 )
+	end
 	love.graphics.points(
 		math.floor((love.mouse.getX() + camera.x)/camera.zoom),
 		math.floor((love.mouse.getY() + camera.y)/camera.zoom)
